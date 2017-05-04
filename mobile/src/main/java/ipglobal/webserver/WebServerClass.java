@@ -3,6 +3,8 @@ package ipglobal.webserver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -30,6 +32,7 @@ import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.List;
 
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -52,6 +55,7 @@ public class WebServerClass {
     private static final String SYSDATA_PATTERN = "/sysdata";
     private static final String DATA_PATTERN = "/data";
     private static final String CACHE_PATTERN = "/cache";
+    private static final String QR_PATTERN = "/qr";
 
     private Context context = null;
     private ServerSocket serverSocket;
@@ -80,6 +84,7 @@ public class WebServerClass {
         registry.register(SYSDATA_PATTERN, new RoiCommandHandler());
         registry.register(DATA_PATTERN, new SergioCommandHandler());
         registry.register(CACHE_PATTERN, new CacheCommandHandler());
+        registry.register(QR_PATTERN, new QrCommandHandler());
 
         httpService.setHandlerResolver(registry);
     }
@@ -256,6 +261,41 @@ public class WebServerClass {
 
     }
 
+    class QrCommandHandler implements HttpRequestHandler {
+
+        @Override
+        public void handle(HttpRequest request, HttpResponse response,
+                           HttpContext httpContext) throws HttpException, IOException {
+
+            Intent qrIntent = new Intent("launcher.suiteapp.qrcode");
+            qrIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            //receiverIntent.putExtra("nombre_customer", "");
+            PackageManager packageManager = context.getPackageManager();
+            List<ResolveInfo> activities = packageManager.queryIntentActivities(qrIntent, 0);
+            boolean isIntentSafe = activities.size() > 0;
+            if(isIntentSafe){
+                context.startActivity(qrIntent);
+            }
+
+            //deleteAllCache();
+            HttpEntity httpEntity = new EntityTemplate(
+                    new ContentProducer() {
+                        @Override
+                        public void writeTo(final OutputStream outputStream) throws IOException {
+                            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+                                    outputStream, "UTF-8");
+                            String response = "<html><head></head><body><h1>Hello Android-TV MAIN, from SuiteAppTV<h1></br>" +
+                                    "<h1 align=\"center\">QR Code displayed in SuiteApp TV</h1></body></html>";
+
+                            outputStreamWriter.write(response);
+                            outputStreamWriter.flush();
+                        }
+                    });
+            response.setHeader("Content-Type", "text/html");
+            response.setEntity(httpEntity);
+        }
+
+    }
 
 
     public void clearData(){
