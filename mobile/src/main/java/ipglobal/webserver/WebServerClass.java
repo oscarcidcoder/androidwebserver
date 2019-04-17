@@ -329,8 +329,8 @@ public class WebServerClass {
         try {
             // clearing app data
             final String CHARSET_NAME = "UTF-8";
-            //String cmd = "pm clear ipglobal.suiteapp";
-            String cmd = "pm clear com.droidlogic";
+            String cmd = "pm clear ipglobal.suiteapp";
+            //String cmd = "pm clear com.droidlogic";
             OutputStream out;
             ProcessBuilder pb = new ProcessBuilder().redirectErrorStream(true).command("su");
             Process p = pb.start();
